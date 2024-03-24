@@ -336,7 +336,7 @@ show_help(void)
 }
 
 int
-main(int argc, char *argv[])
+main(int argc, char** argv)
 {
     cag_option_context context;
     const char* file = NULL;
@@ -449,9 +449,17 @@ main(int argc, char *argv[])
         fclose(in_stream);
     }
 
-    if (data != NULL)
+    if (total_size > 0U)
     {
         data[total_size] = '\0';
+    }
+    else
+    {
+        if (settings.verbose)
+        {
+            printf("Empty input/file.\n");
+        }
+        return EXIT_SUCCESS;
     }
 
     /* If NA is given, the EOL shall be determined automatically */
