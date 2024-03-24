@@ -276,6 +276,14 @@ is_valid_character(int c)
     }
     else if (c <= 31) /* control characters */
     {
+        if ((c == '\n') || (c == '\r'))
+        {
+            return true; /* ignore end-of-line characters */
+        }
+        if (settings.ht && (c == '\t'))
+        {
+            return true;
+        }
         if (settings.ff && (c == '\f'))
         {
             return true;
@@ -283,14 +291,6 @@ is_valid_character(int c)
         if (settings.vt && (c == '\v'))
         {
             return true;
-        }
-        if (settings.ht && (c == '\t'))
-        {
-            return true;
-        }
-        if ((c == '\r') || (c == '\n'))
-        {
-            return true; /* ignore end-of-line characters */
         }
         return false;
     }
