@@ -16,7 +16,8 @@
 
 #define VERSION ("0.1.0-alpha")
 
-#define CHUNK_SIZE (16 * 1024U)
+#define CHUNK_SIZE      (16 * 1024U)
+#define MAX_VALID_CHAR  (126 + 1)
 
 typedef enum
 {
@@ -268,54 +269,55 @@ is_eol(const char* buf, eol_t eol)
 }
 
 static inline bool
-is_valid_character(int c)
+is_valid_character(int c, bool* valid)
 {
-    if (c < 0)
+    if (c < 0 || c > 126)
     {
         return false;
     }
-    else if (c <= 31) /* control characters */
-    {
-        if (settings.ff && (c == '\f'))
-        {
-            return true;
-        }
-        if (settings.vt && (c == '\v'))
-        {
-            return true;
-        }
-        if (settings.ht && (c == '\t'))
-        {
-            return true;
-        }
-        if ((c == '\r') || (c == '\n'))
-        {
-            return true; /* ignore end-of-line characters */
-        }
-        return false;
-    }
-    else if (c <= 126) /* printable ASCII characters */
-    {
-        if (settings.apa)
-        {
-            return true;
-        }
-        else
-        {
-            if ((c == 36) || (c == 64) || (c == 96))
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-    }
-    else /* > 127 locale specific */
-    {
-        return false;
-    }
+    return valid[c];
+    // else if (c <= 31) /* control characters */
+    // {
+    //     if ((c == '\n') || (c == '\r'))
+    //     {
+    //         return true; /* ignore end-of-line characters */
+    //     }
+    //     if (settings.ht && (c == '\t'))
+    //     {
+    //         return true;
+    //     }
+    //     if (settings.ff && (c == '\f'))
+    //     {
+    //         return true;
+    //     }
+    //     if (settings.vt && (c == '\v'))
+    //     {
+    //         return true;
+    //     }
+    //     return false;
+    // }
+    // else if (c <= 126) /* printable ASCII characters */
+    // {
+    //     if (settings.apa)
+    //     {
+    //         return true;
+    //     }
+    //     else
+    //     {
+    //         if ((c == 36) || (c == 64) || (c == 96))
+    //         {
+    //             return false;
+    //         }
+    //         else
+    //         {
+    //             return true;
+    //         }
+    //     }
+    // }
+    // else /* > 127 locale specific */
+    // {
+    //     return false;
+    // }
 }
 
 static void
@@ -338,6 +340,19 @@ show_help(void)
 int
 main(int argc, char** argv)
 {
+    bool valid_chars[MAX_VALID_CHAR] = {0};
+
+    for (size_t i = 0x20U; i < MAX_VALID_CHAR; i++)
+    {
+        valid_chars[i] = true;
+    }
+    valid_chars[9] = true;
+    valid_chars[10] = true;
+    valid_chars[13] = true;
+    valid_chars[36] = false;
+    valid_chars[64] = false;
+    valid_chars[96] = false;
+
     cag_option_context context;
     const char* file = NULL;
 
@@ -352,15 +367,21 @@ main(int argc, char** argv)
                 break;
             case ARG_ID_FF:
                 settings.ff = true;
+                valid_chars[12] = true;
                 break;
             case ARG_ID_VT:
                 settings.vt = true;
+                valid_chars[11] = true;
                 break;
             case ARG_ID_NOHT:
                 settings.ht = false;
+                valid_chars[9] = false;
                 break;
             case ARG_ID_APA:
                 settings.apa = true;
+                valid_chars[36] = true;
+                valid_chars[64] = true;
+                valid_chars[96] = true;
                 break;
             case ARG_ID_VERBOSE:
                 settings.verbose = true;
@@ -499,7 +520,7 @@ main(int argc, char** argv)
             }
             line++;
         }
-        else if (!is_valid_character(*s))
+        else if (!is_valid_character(*s, valid_chars))
         {
             if (settings.verbose)
             {
