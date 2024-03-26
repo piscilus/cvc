@@ -16,7 +16,17 @@
 
 #define VERSION ("0.1.0-alpha")
 
-#define CHUNK_SIZE (16 * 1024U)
+#define CHUNK_SIZE      (16U * 1024U)
+#define MAX_VALID_CHAR  (126 + 1)
+
+#define CHAR_CODE_HT        (9)
+#define CHAR_CODE_LF        (10)
+#define CHAR_CODE_VT        (11)
+#define CHAR_CODE_FF        (12)
+#define CHAR_CODE_CR        (13)
+#define CHAR_CODE_DOLLAR    (36)
+#define CHAR_CODE_AT        (64)
+#define CHAR_CODE_BACKTICK  (96)
 
 typedef enum
 {
@@ -47,25 +57,6 @@ enum
     ARG_ID_VERBOSE,
     ARG_ID_VERSION,
     ARG_ID_HELP
-};
-
-struct
-{
-    bool ff;
-    bool ht;
-    bool vt;
-    bool apa;
-    bool verbose;
-    eol_t eol;
-}
-settings =
-{
-    .ff = false,
-    .ht = true,
-    .vt = false,
-    .apa = false,
-    .verbose = false,
-    .eol = EOL_NA,
 };
 
 const struct cag_option options[] =
@@ -103,7 +94,7 @@ const struct cag_option options[] =
         .access_letters = NULL,
         .access_name = "apa",
         .value_name = NULL,
-        .description = "Permit all printable ASCII characaters"
+        .description = "Permit all printable ASCII characters"
     },
     {
         .identifier = ARG_ID_NOHT,
@@ -267,59 +258,8 @@ is_eol(const char* buf, eol_t eol)
     return false;
 }
 
-static inline bool
-is_valid_character(int c)
-{
-    if (c < 0)
-    {
-        return false;
-    }
-    else if (c <= 31) /* control characters */
-    {
-        if ((c == '\n') || (c == '\r'))
-        {
-            return true; /* ignore end-of-line characters */
-        }
-        if (settings.ht && (c == '\t'))
-        {
-            return true;
-        }
-        if (settings.ff && (c == '\f'))
-        {
-            return true;
-        }
-        if (settings.vt && (c == '\v'))
-        {
-            return true;
-        }
-        return false;
-    }
-    else if (c <= 126) /* printable ASCII characters */
-    {
-        if (settings.apa)
-        {
-            return true;
-        }
-        else
-        {
-            if ((c == 36) || (c == 64) || (c == 96))
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-    }
-    else /* > 127 locale specific */
-    {
-        return false;
-    }
-}
-
 static void
-show_help(void)
+show_usage(void)
 {
     printf("Usage: cvc [OPTION]...\n");
     printf("Character Set Validator for C/C++ Source Code.\n\n");
@@ -338,6 +278,25 @@ show_help(void)
 int
 main(int argc, char** argv)
 {
+    eol_t eol = EOL_NA;
+    bool verbose = false;
+    bool valid_chars[MAX_VALID_CHAR] = {0};
+
+    /* preset range of printable ASCII characters */
+    for (size_t i = 0x20U; i < MAX_VALID_CHAR; i++)
+    {
+        valid_chars[i] = true;
+    }
+    /* preset range of control characters */
+    valid_chars[CHAR_CODE_HT] = true;
+    valid_chars[CHAR_CODE_LF] = true;
+    valid_chars[CHAR_CODE_VT] = false;
+    valid_chars[CHAR_CODE_FF] = false;
+    valid_chars[CHAR_CODE_CR] = true;
+    valid_chars[CHAR_CODE_DOLLAR] = false;
+    valid_chars[CHAR_CODE_AT] = false;
+    valid_chars[CHAR_CODE_BACKTICK] = false;
+
     cag_option_context context;
     const char* file = NULL;
 
@@ -351,42 +310,44 @@ main(int argc, char** argv)
                 file = cag_option_get_value(&context);
                 break;
             case ARG_ID_FF:
-                settings.ff = true;
+                valid_chars[CHAR_CODE_FF] = true;
                 break;
             case ARG_ID_VT:
-                settings.vt = true;
+                valid_chars[CHAR_CODE_VT] = true;
                 break;
             case ARG_ID_NOHT:
-                settings.ht = false;
+                valid_chars[CHAR_CODE_HT] = false;
                 break;
             case ARG_ID_APA:
-                settings.apa = true;
+                valid_chars[CHAR_CODE_DOLLAR] = true;
+                valid_chars[CHAR_CODE_AT] = true;
+                valid_chars[CHAR_CODE_BACKTICK] = true;
                 break;
             case ARG_ID_VERBOSE:
-                settings.verbose = true;
+                verbose = true;
                 break;
             case ARG_ID_EOL:
             {
-                const char* eol = cag_option_get_value(&context);
-                if (strcmp(eol, "LF") == 0)
+                const char* eol_opt = cag_option_get_value(&context);
+                if (strcmp(eol_opt, "LF") == 0)
                 {
-                    settings.eol = EOL_LF;
+                    eol = EOL_LF;
                 }
-                else if (strcmp(eol, "CRLF") == 0)
+                else if (strcmp(eol_opt, "CRLF") == 0)
                 {
-                    settings.eol = EOL_CRLF;
+                    eol = EOL_CRLF;
                 }
-                else if (strcmp(eol, "CR") == 0)
+                else if (strcmp(eol_opt, "CR") == 0)
                 {
-                    settings.eol = EOL_CRLF;
+                    eol = EOL_CRLF;
                 }
-                else if (strcmp(eol, "NA") == 0)
+                else if (strcmp(eol_opt, "NA") == 0)
                 {
-                    settings.eol = EOL_NA;
+                    eol = EOL_NA;
                 }
                 else
                 {
-                    fprintf(stderr, "Error: EOL '%s' not supported!\n", eol);
+                    fprintf(stderr, "Error: EOL '%s' not supported!\n", eol_opt);
                     return RETURN_ERROR_PARAMETER;
                 }
                 break;
@@ -395,7 +356,7 @@ main(int argc, char** argv)
                 printf("%s\n", VERSION);
                 return EXIT_SUCCESS;
             case ARG_ID_HELP:
-                show_help();
+                show_usage();
                 return EXIT_SUCCESS;
             default:
                 return RETURN_ERROR_PARAMETER;
@@ -412,7 +373,7 @@ main(int argc, char** argv)
         }
         else
         {
-            if (settings.verbose)
+            if (verbose)
             {
                 printf("file: %s\n", file);
             }
@@ -426,10 +387,10 @@ main(int argc, char** argv)
     char* data = NULL;
     size_t total_size = 0U;
     size_t bytes_read;
-    char buffer[CHUNK_SIZE + 1U];
-    while ((bytes_read = fread(buffer, sizeof(char), CHUNK_SIZE, in_stream)) > 0U)
+    char buf[CHUNK_SIZE + 1U];
+    while ((bytes_read = fread(buf, sizeof(char), CHUNK_SIZE, in_stream)) > 0U)
     {
-        buffer[bytes_read] = '\0';
+        buf[bytes_read] = '\0';
         data = realloc(data, total_size + bytes_read + 1U);
         if (data == NULL)
         {
@@ -440,7 +401,7 @@ main(int argc, char** argv)
             }
             return RETURN_ERROR_UNSPECIFIC;
         }
-        memcpy(data + total_size, buffer, bytes_read);
+        memcpy(data + total_size, buf, bytes_read);
         total_size += bytes_read;
     }
 
@@ -455,7 +416,7 @@ main(int argc, char** argv)
     }
     else
     {
-        if (settings.verbose)
+        if (verbose)
         {
             printf("Empty input/file.\n");
         }
@@ -463,8 +424,8 @@ main(int argc, char** argv)
     }
 
     /* If NA is given, the EOL shall be determined automatically */
-    eol_t e = settings.eol;
-    if (settings.eol == EOL_NA)
+    eol_t e = eol;
+    if (eol == EOL_NA)
     {
         e = determine_eol(data);
     }
@@ -472,7 +433,7 @@ main(int argc, char** argv)
     unsigned int result = validate_eol(data, e);
     if (result != 0U)
     {
-        if (settings.verbose)
+        if (verbose)
         {
             fprintf(stderr,
                     "Unexpected end-of-line indicator in line %u!\n",
@@ -499,9 +460,9 @@ main(int argc, char** argv)
             }
             line++;
         }
-        else if (!is_valid_character(*s))
+        else if ((*s < 0) || (*s > 126) || (!valid_chars[(int)*s]))
         {
-            if (settings.verbose)
+            if (verbose)
             {
                 if (line != last_line)
                 {
