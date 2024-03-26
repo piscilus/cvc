@@ -59,25 +59,6 @@ enum
     ARG_ID_HELP
 };
 
-// struct
-// {
-//     bool ff;
-//     bool ht;
-//     bool vt;
-//     bool apa;
-//     bool verbose;
-//     eol_t eol;
-// }
-// settings =
-// {
-//     .ff = false,
-//     .ht = true,
-//     .vt = false,
-//     .apa = false,
-//     .verbose = false,
-//     .eol = EOL_NA,
-// };
-
 const struct cag_option options[] =
 {
     {
@@ -113,7 +94,7 @@ const struct cag_option options[] =
         .access_letters = NULL,
         .access_name = "apa",
         .value_name = NULL,
-        .description = "Permit all printable ASCII characaters"
+        .description = "Permit all printable ASCII characters"
     },
     {
         .identifier = ARG_ID_NOHT,
@@ -278,7 +259,7 @@ is_eol(const char* buf, eol_t eol)
 }
 
 static void
-show_help(void)
+show_usage(void)
 {
     printf("Usage: cvc [OPTION]...\n");
     printf("Character Set Validator for C/C++ Source Code.\n\n");
@@ -375,7 +356,7 @@ main(int argc, char** argv)
                 printf("%s\n", VERSION);
                 return EXIT_SUCCESS;
             case ARG_ID_HELP:
-                show_help();
+                show_usage();
                 return EXIT_SUCCESS;
             default:
                 return RETURN_ERROR_PARAMETER;
@@ -406,10 +387,10 @@ main(int argc, char** argv)
     char* data = NULL;
     size_t total_size = 0U;
     size_t bytes_read;
-    char buffer[CHUNK_SIZE + 1U];
-    while ((bytes_read = fread(buffer, sizeof(char), CHUNK_SIZE, in_stream)) > 0U)
+    char buf[CHUNK_SIZE + 1U];
+    while ((bytes_read = fread(buf, sizeof(char), CHUNK_SIZE, in_stream)) > 0U)
     {
-        buffer[bytes_read] = '\0';
+        buf[bytes_read] = '\0';
         data = realloc(data, total_size + bytes_read + 1U);
         if (data == NULL)
         {
@@ -420,7 +401,7 @@ main(int argc, char** argv)
             }
             return RETURN_ERROR_UNSPECIFIC;
         }
-        memcpy(data + total_size, buffer, bytes_read);
+        memcpy(data + total_size, buf, bytes_read);
         total_size += bytes_read;
     }
 
