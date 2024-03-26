@@ -19,6 +19,15 @@
 #define CHUNK_SIZE      (16U * 1024U)
 #define MAX_VALID_CHAR  (126 + 1)
 
+#define CHAR_CODE_HT        (9)
+#define CHAR_CODE_LF        (10)
+#define CHAR_CODE_VT        (11)
+#define CHAR_CODE_FF        (12)
+#define CHAR_CODE_CR        (13)
+#define CHAR_CODE_DOLLAR    (36)
+#define CHAR_CODE_AT        (64)
+#define CHAR_CODE_BACKTICK  (96)
+
 typedef enum
 {
     EOL_NA,  /* Not available, placeholder. */
@@ -50,24 +59,24 @@ enum
     ARG_ID_HELP
 };
 
-struct
-{
-    bool ff;
-    bool ht;
-    bool vt;
-    bool apa;
-    bool verbose;
-    eol_t eol;
-}
-settings =
-{
-    .ff = false,
-    .ht = true,
-    .vt = false,
-    .apa = false,
-    .verbose = false,
-    .eol = EOL_NA,
-};
+// struct
+// {
+//     bool ff;
+//     bool ht;
+//     bool vt;
+//     bool apa;
+//     bool verbose;
+//     eol_t eol;
+// }
+// settings =
+// {
+//     .ff = false,
+//     .ht = true,
+//     .vt = false,
+//     .apa = false,
+//     .verbose = false,
+//     .eol = EOL_NA,
+// };
 
 const struct cag_option options[] =
 {
@@ -288,6 +297,8 @@ show_help(void)
 int
 main(int argc, char** argv)
 {
+    eol_t eol = EOL_NA;
+    bool verbose = false;
     bool valid_chars[MAX_VALID_CHAR] = {0};
 
     /* preset range of printable ASCII characters */
@@ -295,12 +306,15 @@ main(int argc, char** argv)
     {
         valid_chars[i] = true;
     }
-    valid_chars[9] = true; /* HT */
-    valid_chars[10] = true; /* LF */
-    valid_chars[13] = true; /* CR */
-    valid_chars[36] = false; /* dollar */
-    valid_chars[64] = false; /* at */
-    valid_chars[96] = false; /* backtick */
+    /* preset range of control characters */
+    valid_chars[CHAR_CODE_HT] = true;
+    valid_chars[CHAR_CODE_LF] = true;
+    valid_chars[CHAR_CODE_VT] = false;
+    valid_chars[CHAR_CODE_FF] = false;
+    valid_chars[CHAR_CODE_CR] = true;
+    valid_chars[CHAR_CODE_DOLLAR] = false;
+    valid_chars[CHAR_CODE_AT] = false;
+    valid_chars[CHAR_CODE_BACKTICK] = false;
 
     cag_option_context context;
     const char* file = NULL;
@@ -315,48 +329,44 @@ main(int argc, char** argv)
                 file = cag_option_get_value(&context);
                 break;
             case ARG_ID_FF:
-                settings.ff = true;
-                valid_chars[12] = true;
+                valid_chars[CHAR_CODE_FF] = true;
                 break;
             case ARG_ID_VT:
-                settings.vt = true;
-                valid_chars[11] = true;
+                valid_chars[CHAR_CODE_VT] = true;
                 break;
             case ARG_ID_NOHT:
-                settings.ht = false;
-                valid_chars[9] = false;
+                valid_chars[CHAR_CODE_HT] = false;
                 break;
             case ARG_ID_APA:
-                settings.apa = true;
-                valid_chars[36] = true;
-                valid_chars[64] = true;
-                valid_chars[96] = true;
+                valid_chars[CHAR_CODE_DOLLAR] = true;
+                valid_chars[CHAR_CODE_AT] = true;
+                valid_chars[CHAR_CODE_BACKTICK] = true;
                 break;
             case ARG_ID_VERBOSE:
-                settings.verbose = true;
+                verbose = true;
                 break;
             case ARG_ID_EOL:
             {
-                const char* eol = cag_option_get_value(&context);
-                if (strcmp(eol, "LF") == 0)
+                const char* eol_opt = cag_option_get_value(&context);
+                if (strcmp(eol_opt, "LF") == 0)
                 {
-                    settings.eol = EOL_LF;
+                    eol = EOL_LF;
                 }
-                else if (strcmp(eol, "CRLF") == 0)
+                else if (strcmp(eol_opt, "CRLF") == 0)
                 {
-                    settings.eol = EOL_CRLF;
+                    eol = EOL_CRLF;
                 }
-                else if (strcmp(eol, "CR") == 0)
+                else if (strcmp(eol_opt, "CR") == 0)
                 {
-                    settings.eol = EOL_CRLF;
+                    eol = EOL_CRLF;
                 }
-                else if (strcmp(eol, "NA") == 0)
+                else if (strcmp(eol_opt, "NA") == 0)
                 {
-                    settings.eol = EOL_NA;
+                    eol = EOL_NA;
                 }
                 else
                 {
-                    fprintf(stderr, "Error: EOL '%s' not supported!\n", eol);
+                    fprintf(stderr, "Error: EOL '%s' not supported!\n", eol_opt);
                     return RETURN_ERROR_PARAMETER;
                 }
                 break;
@@ -382,7 +392,7 @@ main(int argc, char** argv)
         }
         else
         {
-            if (settings.verbose)
+            if (verbose)
             {
                 printf("file: %s\n", file);
             }
@@ -425,7 +435,7 @@ main(int argc, char** argv)
     }
     else
     {
-        if (settings.verbose)
+        if (verbose)
         {
             printf("Empty input/file.\n");
         }
@@ -433,8 +443,8 @@ main(int argc, char** argv)
     }
 
     /* If NA is given, the EOL shall be determined automatically */
-    eol_t e = settings.eol;
-    if (settings.eol == EOL_NA)
+    eol_t e = eol;
+    if (eol == EOL_NA)
     {
         e = determine_eol(data);
     }
@@ -442,7 +452,7 @@ main(int argc, char** argv)
     unsigned int result = validate_eol(data, e);
     if (result != 0U)
     {
-        if (settings.verbose)
+        if (verbose)
         {
             fprintf(stderr,
                     "Unexpected end-of-line indicator in line %u!\n",
@@ -471,7 +481,7 @@ main(int argc, char** argv)
         }
         else if ((*s < 0) || (*s > 126) || (!valid_chars[(int)*s]))
         {
-            if (settings.verbose)
+            if (verbose)
             {
                 if (line != last_line)
                 {
