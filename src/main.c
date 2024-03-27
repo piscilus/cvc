@@ -14,7 +14,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define VERSION ("0.1.0-alpha")
+#define PROGRAM_NAME    "cvc"
+#define VERSION         "0.1.0-alpha"
 
 #define CHUNK_SIZE      (16U * 1024U)
 #define MAX_VALID_CHAR  (126 + 1)
@@ -43,7 +44,7 @@ enum
     RETURN_ERROR_EOL,
     RETURN_ERROR_UNSPECIFIC,
     RETURN_ERROR_INPUT,
-    RETURN_ERROR_PARAMETER
+    RETURN_ERROR_OPTIONS
 };
 
 enum
@@ -260,18 +261,34 @@ is_eol(const char* buf, eol_t eol)
 static void
 show_usage(void)
 {
-    printf("Usage: cvc [OPTION]...\n");
-    printf("Character Set Validator for C/C++ Source Code.\n\n");
+    printf("Usage: "PROGRAM_NAME" [OPTION]...\n\n");
     cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
-    printf("\nGet latest version from: https://github.com/piscilus/cvc\n");
-    printf("\nProgram reads from standard output if no file given.\n");
-    printf("\n_Exit Codes_\n");
-    printf("%d: valid\n", RETURN_VALID);
-    printf("%d: validation \n", RETURN_INVALID);
-    printf("%d: EOL indicator mismatch\n", RETURN_ERROR_EOL);
-    printf("%d: unspecific error\n", RETURN_ERROR_UNSPECIFIC);
-    printf("%d: input error, e.g., file could not be read\n", RETURN_ERROR_INPUT);
-    printf("%d: invalid parameter\n", RETURN_ERROR_PARAMETER);
+}
+
+static void
+show_help(void)
+{
+    show_usage();
+    printf("\nCharacter Set Validator for C/C++ Source Code\n\n\
+"PROGRAM_NAME" reads from standard output if no file given.\n\
+"PROGRAM_NAME" determines EOL indicator if no eol specified (EOL NA).\n\
+"PROGRAM_NAME" checks for consistent EOL prior validation.\n\n\
+Exit codes:\n");
+    printf("%d = input passed validation\n", RETURN_VALID);
+    printf("%d = input failed validation \n", RETURN_INVALID);
+    printf("%d = EOL indicator mismatch\n", RETURN_ERROR_EOL);
+    printf("%d = unspecific error\n", RETURN_ERROR_UNSPECIFIC);
+    printf("%d = input error, e.g., file could not be read\n", RETURN_ERROR_INPUT);
+    printf("%d = invalid option\n", RETURN_ERROR_OPTIONS);
+}
+
+static void
+show_version(void)
+{
+    printf(PROGRAM_NAME" "VERSION"\n\n\
+Copyright (C) 2024 Julian Kraemer\n\
+MIT license <https://github.com/piscilus/cvc/blob/main/LICENSE>\n\n\
+Get latest version of "PROGRAM_NAME" from <https://github.com/piscilus/cvc>\n");
 }
 
 int
@@ -347,18 +364,21 @@ main(int argc, char** argv)
                 else
                 {
                     fprintf(stderr, "Error: EOL '%s' not supported!\n", eol_opt);
-                    return RETURN_ERROR_PARAMETER;
+                    show_usage();
+                    return RETURN_ERROR_OPTIONS;
                 }
                 break;
             }
             case ARG_ID_VERSION:
-                printf("%s\n", VERSION);
+                show_version();
                 return EXIT_SUCCESS;
             case ARG_ID_HELP:
-                show_usage();
+                show_help();
                 return EXIT_SUCCESS;
             default:
-                return RETURN_ERROR_PARAMETER;
+                fprintf(stderr, "Error: invalid option!\n");
+                show_usage();
+                return RETURN_ERROR_OPTIONS;
         }
     }
 
@@ -367,7 +387,7 @@ main(int argc, char** argv)
     {
         if ((in_stream = fopen(file, "rb")) == NULL)
         {
-            fprintf(stderr, "Failed to open file %s!\n", file);
+            fprintf(stderr, "Error: Failed to open file '%s'!\n", file);
             return RETURN_ERROR_INPUT;
         }
         else
@@ -393,7 +413,7 @@ main(int argc, char** argv)
         data = realloc(data, total_size + bytes_read + 1U);
         if (data == NULL)
         {
-            fprintf(stderr, "Memory allocation failed!\n");
+            fprintf(stderr, "Error: Memory allocation failed!\n");
             if (file != NULL)
             {
                 fclose(in_stream);
@@ -435,7 +455,7 @@ main(int argc, char** argv)
         if (verbose)
         {
             fprintf(stderr,
-                    "Unexpected end-of-line indicator in line %u!\n",
+                    "Error: Unexpected end-of-line indicator in line %u!\n",
                     result);
         }
         free(data);
