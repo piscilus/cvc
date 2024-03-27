@@ -76,6 +76,13 @@ const struct cag_option options[] =
         .description = "End-of-line indicator (default: NA)"
     },
     {
+        .identifier = ARG_ID_NOHT,
+        .access_letters = NULL,
+        .access_name = "noht",
+        .value_name = NULL,
+        .description = "Forbid horizontal tab character"
+    },
+    {
         .identifier = ARG_ID_FF,
         .access_letters = NULL,
         .access_name = "ff",
@@ -91,19 +98,11 @@ const struct cag_option options[] =
     },
     {
         .identifier = ARG_ID_APA,
-        .access_letters = NULL,
-        .access_name = "apa",
+        .access_letters = "a",
+        .access_name = "all",
         .value_name = NULL,
         .description = "Permit all printable ASCII characters"
     },
-    {
-        .identifier = ARG_ID_NOHT,
-        .access_letters = NULL,
-        .access_name = "noht",
-        .value_name = NULL,
-        .description = "Forbid horizontal tab character"
-    },
-
     {
         .identifier = ARG_ID_VERBOSE,
         .access_letters = "v",
@@ -265,7 +264,7 @@ show_usage(void)
     printf("Character Set Validator for C/C++ Source Code.\n\n");
     cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
     printf("\nGet latest version from: https://github.com/piscilus/cvc\n");
-    printf("\nWith no FILE, read standard input.\n");
+    printf("\nProgram reads from standard output if no file given.\n");
     printf("\n_Exit Codes_\n");
     printf("%d: valid\n", RETURN_VALID);
     printf("%d: validation \n", RETURN_INVALID);
