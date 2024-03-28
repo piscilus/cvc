@@ -1,48 +1,65 @@
-.PHONY: all clean
+.PHONY: debug release clean
+.DEFAULT_GOAL = debug
 
-EXECUTABLE = cvc
+TARGET = cvc
 
-SRCDIR = .
-OBJDIR = obj
-BINDIR = bin
-
-SOURCES = main.c
+SOURCES  = main.c
 SOURCES += lib/cargs/cargs.c
 
-INCLUDES = -I.
+INCLUDES  = -I.
 INCLUDES += -Ilib/cargs
 
-OBJS = $(addprefix $(OBJDIR)/, $(SOURCES:.c=.o) )
+OBJECTDIR = ./objects
+OBJECTDIR_DBG = ./$(OBJECTDIR)/debug
+OBJECTDIR_REL = ./$(OBJECTDIR)/release
 
 CC = gcc
 CFLAGS =\
 	-c\
-	-std=c11\
+	-std=c99\
 	-Wall\
 	-Wextra\
-	-Wpedantic\
+	-Wpedantic
+CFLAGS_DBG =\
 	-fsanitize=undefined\
 	-fsanitize-undefined-trap-on-error\
 	-g\
-	-D_DEFAULT_SOURCE
+	-O0
+CFLAGS_REL =\
+	-DNDEBUG\
+	-O1
 
 LD = gcc
-LDFLAGS =\
+LDFLAGS =
+LDFLAGS_DBG =\
 	-fsanitize=undefined\
-	-fsanitize-undefined-trap-on-error
+	-fsanitize-undefined-trap-on-error\
+	-Wl,-Map -Wl,debug/$(TARGET).map
+LDFLAGS_REL =
 
-all: $(BINDIR)/$(EXECUTABLE)
+OBJECTS_REL = $(addprefix $(OBJECTDIR_REL)/, $(SOURCES:.c=.o) )
+OBJECTS_DBG = $(addprefix $(OBJECTDIR_DBG)/, $(SOURCES:.c=.o) )
 
-incs:
-	gcc -E -Wp,-v -
+$(OBJECTDIR_REL)/%.o: %.c
+	-mkdir -p $(@D)
+	$(CC) $(INCLUDES) $(CFLAGS) $(CFLAGS_REL) -o $@ -l $(@D) $<
 
-$(OBJDIR)/%.o: %.c
-	mkdir -p $(@D)
-	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
+$(OBJECTDIR_DBG)/%.o: %.c
+	-mkdir -p $(@D)
+	$(CC) $(INCLUDES) $(CFLAGS) $(CFLAGS_DBG) -o $@ -l $(@D) $<
 
-$(BINDIR)/$(EXECUTABLE): $(OBJS)
-	mkdir -p $(BINDIR)
-	$(LD) $(LDFLAGS) $^ -o $@
+debug/$(TARGET): $(OBJECTS_DBG)
+	-mkdir -p $(@D)
+	$(LD) $(OBJECTS_DBG) $(LDFLAGS) $(LDFLAGS_DBG) -o $@
+
+release/$(TARGET): $(OBJECTS_REL)
+	-mkdir -p $(@D)
+	$(LD) $(OBJECTS_REL) $(LDFLAGS) $(LDFLAGS_REL) -o $@
+
+debug: debug/$(TARGET)
+release: release/$(TARGET)
 
 clean:
-	rm -f $(OBJS) $(BINDIR)/$(EXECUTABLE)
+	rm -rfd $(OBJECTDIR)
+	rm -rfd debug
+	rm -rfd release
