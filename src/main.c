@@ -128,13 +128,13 @@ const struct cag_option options[] =
 };
 
 static eol_t
-determine_eol(const char* buf)
+determine_eol(const char* p)
 {
     eol_t eol = EOL_NA;
 
-    for (; *buf != '\0'; buf++)
+    for (; *p != '\0'; p++)
     {
-        if (*buf == '\n')
+        if (*p == '\n')
         {
             if (eol == EOL_CR)
             {
@@ -146,7 +146,7 @@ determine_eol(const char* buf)
                 return EOL_LF;
             }
         }
-        else if (*buf == '\r')
+        else if (*p == '\r')
         {
             eol = EOL_CR;
         }
@@ -229,24 +229,24 @@ validate_eol(const char* buf, eol_t eol)
 }
 
 static inline bool
-is_eol(const char* buf, eol_t eol)
+is_eol(const char* p, eol_t eol)
 {
     switch (eol)
     {
         case EOL_CR:
-            if (*buf == '\r')
+            if (*p == '\r')
             {
                 return true;
             }
             break;
         case EOL_LF:
-            if (*buf == '\n')
+            if (*p == '\n')
             {
                 return true;
             }
             break;
         case EOL_CRLF:
-            if ((*buf == '\r') && (*(buf + 1) == '\n'))
+            if ((*p == '\r') && (*(p + 1) == '\n'))
             {
                 return true;
             }
@@ -465,13 +465,13 @@ main(int argc, char** argv)
     unsigned int line = 1U;
     unsigned int last_line = 0U;
     unsigned int errors = 0U;
-    for (char* s = data; *s != '\0'; s++)
+    for (char* p = data; *p != '\0'; p++)
     {
-        if (is_eol(s, e))
+        if (is_eol(p, e))
         {
             if (e == EOL_CRLF)
             {
-                s++; /* skip the second EOL character */
+                p++; /* skip the second EOL character */
             }
             if (last_line == line)
             {
@@ -479,7 +479,7 @@ main(int argc, char** argv)
             }
             line++;
         }
-        else if ((*s < 0) || (*s > 126) || (!valid_chars[(int)*s]))
+        else if ((*p < 0) || (*p > 126) || (!valid_chars[(int)*p]))
         {
             if (verbose)
             {
@@ -488,7 +488,7 @@ main(int argc, char** argv)
                     printf("line %u:", line);
                     last_line = line;
                 }
-                printf(" 0x%02X (%c)", (unsigned char)*s, *s);
+                printf(" 0x%02X (%c)", (unsigned char)*p, *p);
             }
             errors++;
         }
