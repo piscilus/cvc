@@ -394,7 +394,7 @@ main(int argc, char** argv)
         {
             if (verbose)
             {
-                printf("file: %s\n", file);
+                printf("file %s:\n", file);
             }
         }
     }
