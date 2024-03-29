@@ -365,20 +365,20 @@ main(int argc, char** argv)
                 {
                     fprintf(stderr, "Error: EOL '%s' not supported!\n", eol_opt);
                     show_usage();
-                    return RETURN_ERROR_OPTIONS;
+                    exit(RETURN_ERROR_OPTIONS);
                 }
                 break;
             }
             case ARG_ID_VERSION:
                 show_version();
-                return EXIT_SUCCESS;
+                exit(EXIT_SUCCESS);
             case ARG_ID_HELP:
                 show_help();
-                return EXIT_SUCCESS;
+                exit(EXIT_SUCCESS);
             default:
                 fprintf(stderr, "Error: invalid option!\n");
                 show_usage();
-                return RETURN_ERROR_OPTIONS;
+                exit(RETURN_ERROR_OPTIONS);
         }
     }
 
@@ -388,7 +388,7 @@ main(int argc, char** argv)
         if ((in_stream = fopen(file, "rb")) == NULL)
         {
             fprintf(stderr, "Error: Failed to open file '%s'!\n", file);
-            return RETURN_ERROR_INPUT;
+            exit(RETURN_ERROR_INPUT);
         }
         else
         {
@@ -418,7 +418,7 @@ main(int argc, char** argv)
             {
                 fclose(in_stream);
             }
-            return RETURN_ERROR_UNSPECIFIC;
+            exit(RETURN_ERROR_UNSPECIFIC);
         }
         memcpy(data + total_size, buf, bytes_read);
         total_size += bytes_read;
@@ -439,7 +439,7 @@ main(int argc, char** argv)
         {
             printf("Empty input/file.\n");
         }
-        return EXIT_SUCCESS;
+        exit(EXIT_SUCCESS);
     }
 
     /* If NA is given, the EOL shall be determined automatically */
@@ -459,7 +459,7 @@ main(int argc, char** argv)
                     result);
         }
         free(data);
-        return RETURN_ERROR_EOL;
+        exit(RETURN_ERROR_EOL);
     }
 
     unsigned int line = 1U;
