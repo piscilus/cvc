@@ -40,6 +40,33 @@ ways.
 
 Further reading: <https://trojansource.codes/>
 
+### Example
+
+This example shows a shortened result for cargs.h. The file contains 35 invalid
+characters in total (validation with default settings). With the verbose output
+enabled, the file name and a list of lines with the invalid characters are
+printed to stdout.
+
+```console
+$> cvc -f lib/cargs/cargs.h --verbose
+file lib/cargs/cargs.h:
+line 97: 0x40 (@)
+line 103: 0x40 (@)
+...
+line 161: 0x40 (@)
+line 166: 0x40 (@)
+line 169: 0x60 (`) 0x60 (`)
+line 172: 0x40 (@)
+line 173: 0x40 (@)
+line 178: 0x40 (@)
+line 182: 0x60 (`) 0x60 (`)
+line 184: 0x40 (@)
+...
+line 209: 0x40 (@)
+line 210: 0x40 (@)
+35
+```
+
 ## Encoding
 
 This tool assumes that all characters are encoded as single bytes. However, the
@@ -49,17 +76,17 @@ C23 standard (upcoming ISO/IEC 9899:2023) permits multibyte characters.
 
 hex    | dec     | char | remark
 ------ | ------- | ---- | -----
-9      | 9       | HT   | horizontal tab, see --noht argument
-0A     | 10      | LF   | line feed, EOL indicator, see -e/--eol argument
-0B     | 11      | VT   | vertical tab, see --vt argument
-0C     | 12      | FF   | form feed, see --ff argument
-0D     | 13      | CR   | carriage return, EOL indicator, see -e/--eol argument
+9      | 9       | HT   | horizontal tab, see --noht option
+0A     | 10      | LF   | line feed, EOL indicator, see -e/--eol option
+0B     | 11      | VT   | vertical tab, see --vt option
+0C     | 12      | FF   | form feed, see --ff option
+0D     | 13      | CR   | carriage return, EOL indicator, see -e/--eol option
 ..     | ..      | ..   | n/a
 20     | 32      | SP   | space
 21     | 33      | !    | -
 22     | 34      | "    | -
 23     | 35      | #    | -
-24     | 36      | $    | C23, see --apa argument
+24     | 36      | $    | C23, see -a/--all option
 25     | 37      | %    | -
 26     | 38      | &    | -
 27     | 39      | '    | -
@@ -78,14 +105,14 @@ hex    | dec     | char | remark
 3D     | 61      | =    | -
 3E     | 62      | >    | -
 3F     | 63      | ?    | -
-40     | 64      | @    | C23, see --apa argument
+40     | 64      | @    | C23, see -a/--all option
 41..5A | 65..90  | A-Z  | -
 5B     | 91      | [    | -
 5C     | 92      | \    | -
 5D     | 93      | ]    | -
 5E     | 94      | ^    | -
 5F     | 95      | _    | -
-60     | 96      | `    | C23, see --apa argument
+60     | 96      | `    | C23, see -a/--all option
 61..7A | 97..122 | a-z  | -
 7B     | 123     | {    | -
 7C     | 124     | \|   | -
@@ -96,14 +123,17 @@ hex    | dec     | char | remark
 
 This tool checks the EOL first. By default, EOL is determined automatically
 based on the first occurrence of a EOL indicator. However, an expected EOL
-indicator can be specified with the -e/--eol argument. The EOL indicator which
-must be used consistently throughout the file. Otherwise, the validation stops
+indicator can be specified with the -e/--eol option. The EOL indicator must be
+used consistently throughout the file. Otherwise, the validation stops
 at the first erroneous EOL indicator and reports it.
 
 ## Usage
 
-There are three ways to pass input data to the tool: Specify a source file, pipe
-the data to cvc or type input it manually:
+There are three ways to pass input data to the tool:
+
+1. specify a source file
+2. pipe the data to cvc
+3. type input it manually
 
 ```console
 $> cvc -f main.c --noht --verbose
@@ -111,24 +141,33 @@ file: main.c
 0
 $> cat main.c | cvc --noht --verbose
 0
-$> cvc --e CRLF --noht --verbose
+$> cvc -e CRLF --noht --verbose
 hello
 world(<CTRL> + <D>)
 Unexpected end-of-line indicator in line 1!
 ```
 
+### Cooperation with other tools
+
 Find all *.c/*.cpp/.*h files starting from current directory recursively and
 forward them to cvc for validation:
 
 ```console
-$> find . -regex '.*/.*\.\(c\|cpp\|h\)$' -exec cvc -f {} --verbose \;
+find . -regex '.*/.*\.\(c\|cpp\|h\)$' -exec cvc -f {} --verbose \;
+```
+
+Validate all *.c/*.h files starting from current directory recursively and
+add up the results:
+
+```console
+find . -regex '.*/.*\.\(c\|h\)$' -exec cvc -f {} \; | paste -sd+ - | bc
 ```
 
 Show exit code:
 
 ```console
-$> cvc -f main.c
-$> echo $?
+cvc -f main.c
+echo $?
 ```
 
 ### Defaults
