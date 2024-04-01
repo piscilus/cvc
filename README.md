@@ -1,7 +1,7 @@
 # Character Set Validator for C/C++ Code
 
-This tool can be used to check whether C/C++ source files only contain
-characters from the basic character set as defined in the C standard.
+The **cvc** tool can be used to check whether C/C++ source files only contain
+characters from the *basic character set* as defined in the C standard.
 
 ## Motivation
 
@@ -13,20 +13,15 @@ source character set. Deviating from this set may lead to unexpected behavior or
 errors during compilation. By sticking to the standard, you minimize the risk of
 encountering compatibility issues with compilers.
 
-Consistency in coding style and adherence to standards improve code readability
-and maintainability. When developers follow the basic source character set
-guidelines, it becomes easier for others (and your future self) to understand
-and work with the code.
-
 Various development tools, such as code editors, IDEs, and static analysis tools
 are built to understand and assist with code written according to the C
 standard. Conforming to the basic source character set ensures better support
 from these tools, enhancing the development process.
 
 Unicode defines various control characters that are invisible or have
-non-printable representations, such as zero-width spaces, zero-width joiners,
-and non-breaking space. These characters might not be visible when viewing the
-source code in a regular text editor, making their presence non-obvious.
+non-printable representations, such as Left-to-Right Override or Right-to-Left
+Isolate, zero-width joiners. These characters might not be visible when viewing
+the source code in a regular text editor, making their presence non-obvious.
 
 Depending on the context and the specific characters used, these invisible
 characters can alter the meaning of the code. For example, they might introduce
@@ -69,8 +64,10 @@ line 210: 0x40 (@)
 
 ## Encoding
 
-This tool assumes that all characters are encoded as single bytes. However, the
-C23 standard (upcoming ISO/IEC 9899:2023) permits multibyte characters.
+**cvc** assumes that all characters are encoded as single bytes. However, the
+C23 standard (upcoming ISO/IEC 9899:2023) permits multibyte characters to
+represent members of the character set. However, this is locale-specific and
+therefore not within the scope of this program.
 
 ## Basic source character set
 
@@ -121,15 +118,15 @@ hex    | dec     | char | remark
 
 ## Validation
 
-This tool checks the EOL first. By default, EOL is determined automatically
-based on the first occurrence of a EOL indicator. However, an expected EOL
+**cvc** checks the EOL first. By default, EOL is determined automatically
+based on the first occurrence of an EOL indicator. However, an expected EOL
 indicator can be specified with the -e/--eol option. The EOL indicator must be
 used consistently throughout the file. Otherwise, the validation stops
-at the first erroneous EOL indicator and reports it.
+at the first erroneous EOL indicator.
 
 ## Usage
 
-There are three ways to pass input data to the tool:
+There are three ways to pass input data to the program:
 
 1. specify a source file
 2. pipe the data to cvc
@@ -148,6 +145,10 @@ Unexpected end-of-line indicator in line 1!
 ```
 
 ### Cooperation with other tools
+
+**cvc** is designed with UNIX philosophy in mind and therefore intentionally to
+be used in cooperation with other command-line tools. The following examples
+show the basic idea:
 
 Find all *.c/*.cpp/.*h files starting from current directory recursively and
 forward them to cvc for validation:
@@ -172,7 +173,7 @@ echo $?
 
 ### Defaults
 
-If the cvc is used with default settings, the following applies:
+If **cvc** is used with default settings, the following applies:
 
 - horizontal tabs are allowed
 - form feed and vertical tabs are not allowed
