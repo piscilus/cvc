@@ -1,7 +1,7 @@
 /*
  * Character Set Validator for C/C++ Code.
  *
- * (C) Copyright 2024 "piscilus" Julian Kraemer
+ * Copyright (C) 2024 Julian Kraemer
  *
  * Distributed under MIT license.
  * See LICENSE file for details or copy at https://opensource.org/licenses/MIT
