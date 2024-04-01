@@ -9,6 +9,7 @@
 
 #include "cargs.h"
 
+#include <locale.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -294,6 +295,8 @@ Get latest version of "PROGRAM_NAME" from <https://github.com/piscilus/cvc>\n");
 int
 main(int argc, char** argv)
 {
+    setlocale(LC_ALL, "");
+
     eol_t eol = EOL_NA;
     bool verbose = false;
     bool valid_chars[MAX_VALID_CHAR] = {0};
