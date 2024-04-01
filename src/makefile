@@ -9,9 +9,9 @@ SOURCES += lib/cargs/cargs.c
 INCLUDES  = -I.
 INCLUDES += -Ilib/cargs
 
-OBJECTDIR = ./objects
-OBJECTDIR_DBG = ./$(OBJECTDIR)/debug
-OBJECTDIR_REL = ./$(OBJECTDIR)/release
+OBJECTDIR = objects
+OBJECTDIR_DBG = $(OBJECTDIR)/debug
+OBJECTDIR_REL = $(OBJECTDIR)/release
 
 CC = gcc
 CFLAGS =\
