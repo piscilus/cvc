@@ -66,12 +66,24 @@ line 210: 0x40 (@)
 
 **cvc** assumes that all characters are encoded as single bytes. However, the
 C23 standard (upcoming ISO/IEC 9899:2023) permits multibyte characters to
-represent members of the character set. However, this is locale-specific and
-therefore not within the scope of this program.
+represent members of the *extended character set*.
+
+The purpose of **cvc** is to limit source code to the *basic source character
+set*, which does not include any locale-specific definition.
+
+The coding of characters in the table below is valid for the following character
+encodings (incomplete list):
+
+- ASCII / US-ASCII
+- UTF-8
+- Windows-1252
+- ISO/IEC 8859-1
+- ISO/IEC 8859-15
+- ISO 646 (USA/ASCII)
 
 ## Basic source character set
 
-hex    | dec     | char | remark
+hex    | dec     | char | remarks
 ------ | ------- | ---- | -----
 9      | 9       | HT   | horizontal tab, see --noht option
 0A     | 10      | LF   | line feed, EOL indicator, see -e/--eol option
