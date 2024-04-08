@@ -194,6 +194,5 @@ If **cvc** is used with default settings, the following applies:
 
 ## Open Source Library
 
-This program utilizes the
-[libcargs]([link-to-library](https://github.com/likle/cargs)) version 1.1.0,
+This program utilizes [libcargs](https://github.com/likle/cargs) version 1.1.0,
 which is licensed under the MIT License.
