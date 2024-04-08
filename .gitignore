@@ -1,3 +1,4 @@
 src/release
 src/debug
 src/objects
+src/builddir
