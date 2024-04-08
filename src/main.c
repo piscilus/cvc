@@ -32,7 +32,7 @@
 
 typedef enum
 {
-    EOL_NA,  /* Not available, placeholder. */
+    EOL_AUTO_NA, /* Not available, placeholder. */
     EOL_CR,  /* CR = Carriage Return = \r, "Mac" */
     EOL_LF,  /* LF = Line Feed = \n, "Unix/Linux" */
     EOL_CRLF /* Sequence of CR and LF, "Windows" */
@@ -74,8 +74,8 @@ const struct cag_option options[] =
         .identifier = ARG_ID_EOL,
         .access_letters = "e",
         .access_name = "eol",
-        .value_name = "LF/CRLF/CR/NA",
-        .description = "End-of-line indicator (default: NA)"
+        .value_name = "LF/CRLF/CR/AUTO",
+        .description = "End-of-line indicator (default: AUTO)"
     },
     {
         .identifier = ARG_ID_NOHT,
@@ -131,7 +131,7 @@ const struct cag_option options[] =
 static eol_t
 determine_eol(const char* p)
 {
-    eol_t eol = EOL_NA;
+    eol_t eol = EOL_AUTO_NA;
 
     for (; *p != '\0'; p++)
     {
@@ -297,7 +297,7 @@ main(int argc, char** argv)
 {
     setlocale(LC_ALL, "");
 
-    eol_t eol = EOL_NA;
+    eol_t eol = EOL_AUTO_NA;
     bool verbose = false;
     bool valid_chars[MAX_VALID_CHAR] = {0};
 
@@ -348,29 +348,32 @@ main(int argc, char** argv)
             case ARG_ID_EOL:
             {
                 const char* eol_opt = cag_option_get_value(&context);
-                if (strcmp(eol_opt, "LF") == 0)
+                if (eol_opt != NULL)
                 {
-                    eol = EOL_LF;
+                    if (strcmp(eol_opt, "LF") == 0)
+                    {
+                        eol = EOL_LF;
+                        break;
+                    }
+                    else if (strcmp(eol_opt, "CRLF") == 0)
+                    {
+                        eol = EOL_CRLF;
+                        break;
+                    }
+                    else if (strcmp(eol_opt, "CR") == 0)
+                    {
+                        eol = EOL_CRLF;
+                        break;
+                    }
+                    else if (strcmp(eol_opt, "AUTO") == 0)
+                    {
+                        eol = EOL_AUTO_NA;
+                        break;
+                    }
                 }
-                else if (strcmp(eol_opt, "CRLF") == 0)
-                {
-                    eol = EOL_CRLF;
-                }
-                else if (strcmp(eol_opt, "CR") == 0)
-                {
-                    eol = EOL_CRLF;
-                }
-                else if (strcmp(eol_opt, "NA") == 0)
-                {
-                    eol = EOL_NA;
-                }
-                else
-                {
-                    fprintf(stderr, "Error: EOL '%s' not supported!\n", eol_opt);
-                    show_usage();
-                    exit(RETURN_ERROR_OPTIONS);
-                }
-                break;
+                fprintf(stderr, "Error: EOL not supported!\n");
+                show_usage();
+                exit(RETURN_ERROR_OPTIONS);
             }
             case ARG_ID_VERSION:
                 show_version();
@@ -447,7 +450,7 @@ main(int argc, char** argv)
 
     /* If NA is given, the EOL shall be determined automatically */
     eol_t e = eol;
-    if (eol == EOL_NA)
+    if (eol == EOL_AUTO_NA)
     {
         e = determine_eol(data);
     }
